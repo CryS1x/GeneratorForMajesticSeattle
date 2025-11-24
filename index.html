@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор документов</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #2980b9;
+            --success-color: #27ae60;
+            --warning-color: #e67e22;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+            --background-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --form-bg: white;
+            --text-color: #34495e;
+            --border-color: #ddd;
+            --border-radius: 12px;
+            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+            --hover-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #e0e6ed;
+            --secondary-color: #6bb5ff;
+            --accent-color: #4a9fea;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --light-color: #1a2431;
+            --dark-color: #e0e6ed;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            --background-gradient: linear-gradient(135deg, #1a2431 0%, #2c3e50 100%);
+            --form-bg: #2c3e50;
+            --text-color: #e0e6ed;
+            --border-color: #4a6278;
+            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            --hover-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: var(--background-gradient);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-color);
+            line-height: 1.6;
+            transition: var(--transition);
+        }
+
+        .app-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 992px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-section {
+            background: var(--form-bg);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+        }
+
+        .form-section:hover {
+            box-shadow: var(--hover-shadow);
+        }
+
+        .preview-section {
+            background: var(--form-bg);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--card-shadow);
+            position: sticky;
+            top: 20px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .preview-section:hover {
+            box-shadow: var(--hover-shadow);
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 600;
+            font-size: 2.2rem;
+            position: relative;
+            padding-bottom: 15px;
+        }
+
+        h1:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background: var(--secondary-color);
+            border-radius: 3px;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+            background: rgba(0, 0, 0, 0.03);
+            border-radius: 8px;
+            padding: 5px;
+        }
+
+        [data-theme="dark"] .tabs {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-color);
+            transition: var(--transition);
+            border-radius: 6px;
+            flex: 1;
+            text-align: center;
+        }
+
+        .tab.active {
+            color: var(--secondary-color);
+            background: rgba(52, 152, 219, 0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] .tab.active {
+            background: rgba(107, 181, 255, 0.15);
+        }
+
+        .tab:hover {
+            color: var(--secondary-color);
+            background: rgba(52, 152, 219, 0.05);
+        }
+
+        [data-theme="dark"] .tab:hover {
+            background: rgba(107, 181, 255, 0.1);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        select, input, textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: var(--transition);
+            font-family: 'Montserrat', sans-serif;
+            background: var(--form-bg);
+            color: var(--text-color);
+        }
+
+        select:focus, input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        [data-theme="dark"] select:focus, 
+        [data-theme="dark"] input:focus, 
+        [data-theme="dark"] textarea:focus {
+            box-shadow: 0 0 0 3px rgba(107, 181, 255, 0.3);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 14px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: var(--transition);
+            font-family: 'Montserrat', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #219653;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        [data-theme="dark"] button:disabled {
+            background-color: #5d6d7e;
+        }
+
+        button i {
+            font-size: 18px;
+        }
+
+        .document-content {
+            line-height: 1.6;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            padding: 20mm;
+            background: white;
+            box-sizing: border-box;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transform: scale(0.7);
+            transform-origin: top center;
+            font-family: 'Times New Roman', serif;
+            color: #000;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @media (max-width: 1200px) {
+            .document-content {
+                transform: scale(0.6);
+            }
+        }
+
+        @media (max-width: 992px) {
+            .document-content {
+                transform: scale(0.8);
+            }
+        }
+
+        .header {
+            text-align: center;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .stamp-placeholder {
+            width: 200px;
+            height: 200px;
+            background-image: url('stamp.png'); /* Замените на ваш путь */
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            margin: 0 auto;
+            display: block;
+            opacity: 0.9;
+        }
+
+        .stamp2-placeholder {
+            width: 150px;
+            height: 150px;
+            background-image: url('stamp2.png'); /* Замените на ваш путь */
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            position: absolute;
+            right: 80px;
+            top: 20px;
+            opacity: 0.9;
+        }
+
+        .document-title {
+            text-align: center;
+            margin: 20px 0;
+            font-style: italic;
+            font-size: 16px;
+        }
+
+        .document-title1 {
+            text-align: center;
+            margin: 20px 0;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .order-number {
+            font-style: italic;
+            font-weight: normal;
+        }
+
+        .schedule {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            text-align: center;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 400;
+        }
+
+        .schedule td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+        }
+
+        .schedule tr:last-child td {
+            border-bottom: none;
+        }
+
+        .date-placeholder {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .city-date {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            border-bottom: 1px solid black;
+            padding-bottom: 5px;
+        }
+
+        .city, .date {
+            display: flex;
+            flex-direction: column;
+            font-size: 14px;
+        }
+
+        .underline {
+            min-width: 150px;
+            margin-top: 5px;
+        }
+
+        .signature-img {
+            width: auto;
+            height: 70px;
+            margin-top: 5px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 300;
+            font-size: 24px;
+            font-style: normal;
+            color: #333;
+            text-align: right;
+            display: inline-block;
+        }
+
+        .stamp1-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .signature-area {
+            display: flex;
+            justify-content: flex-end;
+            align-items: flex-start;
+            margin-top: 40px;
+            position: relative;
+        }
+
+        .signature-container {
+            flex: 1;
+            text-align: right;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 300;
+        }
+
+        .date {
+            text-align: right;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            width: 100%;
+        }
+
+        .preview-title {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .help-text {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+
+        [data-theme="dark"] .help-text {
+            color: #a0aec0;
+        }
+
+        #placeholder {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+
+        [data-theme="dark"] #placeholder {
+            color: #a0aec0;
+        }
+
+        #placeholder i {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: var(--light-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: var(--success-color);
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--secondary-color);
+            color: white;
+            padding: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: var(--transition);
+            z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+        }
+
+        .theme-toggle:hover {
+            background: var(--accent-color);
+            transform: scale(1.1) rotate(180deg);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        .form-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .template-selector {
+            margin-bottom: 20px;
+        }
+
+        .document-text {
+            margin: 15px 0;
+            text-align: justify;
+        }
+
+        .document-footer {
+            margin-top: 30px;
+            font-size: 14px;
+        }
+
+        .document-clause {
+            margin: 10px 0;
+            text-indent: 1.5em;
+        }
+
+        .custom-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .document-logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .document-logo img {
+            max-height: 80px;
+        }
+
+        .document-watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            opacity: 0.1;
+            font-size: 80px;
+            color: #000;
+            pointer-events: none;
+            z-index: -1;
+            font-weight: bold;
+        }
+
+        .info-tooltip {
+            display: inline-block;
+            margin-left: 5px;
+            color: var(--secondary-color);
+            cursor: help;
+        }
+
+        .settings-panel {
+            background-color: rgba(0,0,0,0.03);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            border: 1px solid var(--border-color);
+        }
+
+        [data-theme="dark"] .settings-panel {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .settings-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary-color);
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        input[type="radio"], input[type="checkbox"] {
+            width: auto;
+            margin-right: 5px;
+        }
+
+        /* Стили для улучшения читаемости в темной теме */
+        [data-theme="dark"] ::placeholder {
+            color: #a0aec0;
+            opacity: 0.7;
+        }
+
+        [data-theme="dark"] .schedule-editor input {
+            background: #34495e;
+            border-color: #4a6278;
+            color: #e0e6ed;
+        }
+
+        /* Анимации для плавного перехода между темами */
+        .theme-transition * {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* Стили для скроллбара в темной теме */
+        [data-theme="dark"] ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        [data-theme="dark"] ::-webkit-scrollbar-track {
+            background: #2c3e50;
+        }
+
+        [data-theme="dark"] ::-webkit-scrollbar-thumb {
+            background: #4a6278;
+            border-radius: 4px;
+        }
+
+        [data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+            background: #5d6d7e;
+        }
+    </style>
+</head>
+<body class="theme-transition">
+    <button class="theme-toggle" id="themeToggle">
+        <i class="fas fa-moon"></i>
+    </button>
+
+    <div class="app-container">
+        <div class="form-section">
+            <h1><i class="fas fa-file-alt"></i> Генератор документов by crysix</h1>
+            
+            <div class="tabs">
+                <div class="tab active" data-tab="ukaz">Указы</div>
+                <div class="tab" data-tab="postanovlenie">Постановления</div>
+            </div>
+            
+            <div class="tab-content active" id="ukaz">
+                <div class="settings-panel">
+                    <div class="settings-title">
+                        <i class="fas fa-cog"></i> Настройки указа
+                    </div>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" id="appoint" name="actionType" value="appoint" checked>
+                            <label for="appoint">Назначение</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="dismiss" name="actionType" value="dismiss">
+                            <label for="dismiss">Увольнение</label>
+                        </div>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="addWatermark" checked>
+                        <label for="addWatermark">Добавить водяной знак "ЧЕРНОВИК"</label>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="ukazOrderNumber"><i class="fas fa-hashtag"></i> Номер указа:</label>
+                        <input type="number" id="ukazOrderNumber" value="3" min="3">
+                    </div>
+                    <div class="form-group">
+                        <label for="ukazDate"><i class="fas fa-calendar-alt"></i> Дата:</label>
+                        <input type="date" id="ukazDate">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="ukazPosition"><i class="fas fa-user-tie"></i> Должность:</label>
+                        <input type="text" id="ukazPosition" value="Заместитель Министра Здравоохранения">
+                    </div>
+                    <div class="form-group">
+                        <label for="ukazName"><i class="fas fa-signature"></i> Имя и фамилия:</label>
+                        <input type="text" id="ukazName" value="Михаил Козлов">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="idCard"><i class="fas fa-id-card"></i> Номер ID-карты:</label>
+                        <input type="number" id="idCard" value="000000">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="signerName"><i class="fas fa-user"></i> Имя и фамилия подписанта:</label>
+                        <input type="text" id="signerName" value="Алексей Смирнов">
+                    </div>
+                    <div class="form-group">
+                        <label for="signerPosition"><i class="fas fa-briefcase"></i> Должность подписанта:</label>
+                        <input type="text" id="signerPosition" value="Министр Здравоохранения">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="customText"><i class="fas fa-pen"></i> Дополнительный текст (опционально):</label>
+                    <textarea id="customText" class="custom-textarea" placeholder="Введите дополнительный текст, который будет добавлен в документ..."></textarea>
+                </div>
+                
+                <div class="btn-group">
+                    <button id="generateUkazBtn" class="btn-primary">
+                        <i class="fas fa-file-contract"></i> Сгенерировать указ
+                    </button>
+                    <button id="downloadUkazBtn" class="btn-success" disabled>
+                        <i class="fas fa-download"></i> Скачать PNG
+                    </button>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="postanovlenie">
+                <div class="settings-panel">
+                    <div class="settings-title">
+                        <i class="fas fa-cog"></i> Настройки постановления
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="addWatermarkPost" checked>
+                        <label for="addWatermarkPost">Добавить водяной знак "ЧЕРНОВИК"</label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="department"><i class="fas fa-building"></i> Отдел:</label>
+                    <select id="department">
+                        <option value="PSID">Personal Sanitary Inspection Department</option>
+                        <option value="LSFD">Los Santos Fire Department</option>
+                    </select>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="postanovlenieOrderNumber"><i class="fas fa-hashtag"></i> Номер постановления:</label>
+                        <input type="number" id="postanovlenieOrderNumber" value="42" min="42">
+                    </div>
+                    <div class="form-group">
+                        <label for="postanovlenieDate"><i class="fas fa-calendar-alt"></i> Дата:</label>
+                        <input type="date" id="postanovlenieDate">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="postanovleniePosition"><i class="fas fa-user-tie"></i> Должность:</label>
+                        <input type="text" id="postanovleniePosition" value="Заместитель Министра Здравоохранения">
+                    </div>
+                    <div class="form-group">
+                        <label for="postanovlenieName"><i class="fas fa-signature"></i> Имя и фамилия:</label>
+                        <input type="text" id="postanovlenieName" value="Екатерина Соколова">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="scheduleTable"><i class="fas fa-table"></i> График (редактируемый):</label>
+                    <div class="schedule-editor">
+                        <table id="scheduleTable" class="schedule">
+                            <tr>
+                                <td>Понедельник</td>
+                                <td><input type="time" value="19:30"></td>
+                                <td><input type="text" value="EMS"></td>
+                                <td><input type="text" value="мед. проверка"></td>
+                            </tr>
+                            <tr>
+                                <td>Вторник</td>
+                                <td><input type="time" value="19:30"></td>
+                                <td><input type="text" value="FIB"></td>
+                                <td><input type="text" value="мед проверка"></td>
+                            </tr>
+                            <tr>
+                                <td>Среда</td>
+                                <td><input type="time" value="19:30"></td>
+                                <td><input type="text" value="LSPD"></td>
+                                <td><input type="text" value="мед проверка"></td>
+                            </tr>
+                            <tr>
+                                <td>Четверг</td>
+                                <td><input type="time" value="19:30"></td>
+                                <td><input type="text" value="LSCSD"></td>
+                                <td><input type="text" value="мед. проверка"></td>
+                            </tr>
+                            <tr>
+                                <td>Пятница</td>
+                                <td><input type="time" value="19:00"></td>
+                                <td><input type="text" value="WN"></td>
+                                <td><input type="text" value="мед проверка"></td>
+                            </tr>
+                            <tr>
+                                <td>Суббота</td>
+                                <td><input type="time" value="17:00"></td>
+                                <td><input type="text" value="GOV"></td>
+                                <td><input type="text" value="мед проверка"></td>
+                            </tr>
+                            <tr>
+                                <td>Воскресенье</td>
+                                <td><input type="time" value="14:00"></td>
+                                <td><input type="text" value="SANG"></td>
+                                <td><input type="text" value="мед проверка"></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="btn-group">
+                    <button id="generatePostanovlenieBtn" class="btn-primary">
+                        <i class="fas fa-file-contract"></i> Сгенерировать постановление
+                    </button>
+                    <button id="downloadPostanovlenieBtn" class="btn-success" disabled>
+                        <i class="fas fa-download"></i> Скачать PNG
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="preview-section">
+            <div class="preview-header">
+                <div class="preview-title">Предпросмотр</div>
+                <div class="help-text">Документ обновится после генерации</div>
+            </div>
+            
+            <div id="ukazDocument" class="hidden">
+                <div class="document-content" id="ukazDocumentContent">
+                    <div class="document-watermark" id="ukazWatermark">ЧЕРНОВИК</div>
+                    <div class="stamp1-container">
+                        <div class="stamp-placeholder" id="ukazStamp1"></div>
+                    </div>
+                    <div class="header">УКАЗ</div>
+                    <div class="header">МИНИСТЕРСТВО ЗДРАВООХРАНЕНИЯ ШТАТТА САН-АНДРЕАС</div>
+                    
+                    <div class="document-title"><span id="ukazDatePlaceholder">14 Июня 2025 г.</span> №<span id="ukazOrderNumberPlaceholder" class="order-number">3</span></div>
+                    <div class="document-title1">"О кадровых перестановках"</div>
+                    
+                    <p id="ukazMainText">Я, <span id="ukazSignerPositionPlaceholder">Министр Здравоохранения</span> <span id="ukazSignerNamePlaceholder">Алексей Смирнов</span>, в соответствии с действующим законодательством, пользуясь полномочиями, делегированными мне конституцией и иными правовыми актами, указываю назначить на должность "<span id="ukazPositionPlaceholder">Заместитель Министра Социального Развития</span>" гражданина <span id="ukazNamePlaceholder">Михаил Козлов</span> с номером ID-карты <span id="ukazIdCardPlaceholder">64119</span>.</p>
+                    
+                    <div id="ukazCustomTextContainer"></div>
+                    
+                    <p>Настоящий указ вступает в силу со дня его официального опубликования.</p>
+                    
+                    <div class="date-placeholder">
+                        <div class="city-date">
+                            <div class="city">г. Лос-Сантос</div>
+                            <div class="date">
+                                <div class="underline" id="ukazCurrentDate">14.06.2025</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="signature-area">
+                        <div class="stamp2-placeholder" id="ukazStamp2"></div>
+                        <div class="signature-container">
+                            <div><span id="ukazSignerPositionDisplay">Министр Здравоохранения</span></div>
+                            <div><span id="ukazSignerNameDisplay">Алексей Смирнов</span></div>
+                            <div class="signature-img" id="ukazSignatureImg">А. Смирнов</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="postanovlenieDocument" class="hidden">
+                <div class="document-content" id="postanovlenieDocumentContent">
+                    <div class="document-watermark" id="postanovlenieWatermark">ЧЕРНОВИК</div>
+                    <div class="stamp1-container">
+                        <div class="stamp-placeholder" id="postanovlenieStamp1"></div>
+                    </div>
+                    <div class="header">ПОСТАНОВЛЕНИЕ</div>
+                    <div class="header">МИНИСТЕРСТВО ЗДРАВООХРАНЕНИЯ ШТАТА САН-АНДРЕАС</div>
+                    
+                    <div class="document-title">Постановление №<span id="postanovlenieOrderNumberPlaceholder" class="order-number">42</span></div>
+                    <div class="document-title1" id="departmentTitle">"О графике надзорной деятельности "Personal Sanitary Inspection Department"</div>
+                    
+                    <table class="schedule" id="postanovlenieSchedule">
+                        <!-- Schedule will be generated here -->
+                    </table>
+                    
+                    <p>Постановление вступает в силу со дня его официального опубликования</p>
+                    
+                    <div class="date-placeholder">
+                        <div class="city-date">
+                            <div class="city">г. Лос-Сантос</div>
+                            <div class="date">
+                                <div class="underline" id="postanovlenieCurrentDate"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="signature-area">
+                        <div class="stamp2-placeholder" id="postanovlenieStamp2"></div>
+                        <div class="signature-container">
+                            <div><span id="postanovleniePositionPlaceholder">Заместитель Министра Социального Развития</span></div>
+                            <div><span id="postanovlenieNamePlaceholder">Екатерина Соколова</span></div>
+                            <div class="signature-img" id="postanovlenieSignatureImg"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="placeholder" style="text-align: center; padding: 40px; color: #7f8c8d;">
+                <i class="fas fa-file-alt"></i>
+                <p>Выберите тип документа и сгенерируйте его</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">Документ успешно скачан!</div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            const formattedDate = today.toISOString().split('T')[0];
+            
+            document.getElementById('ukazDate').value = formattedDate;
+            document.getElementById('postanovlenieDate').value = formattedDate;
+            
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                document.getElementById('themeToggle').innerHTML = '<i class="fas fa-sun"></i>';
+            }
+        });
+
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            if (currentTheme === 'dark') {
+                document.documentElement.removeAttribute('data-theme');
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                document.getElementById(this.dataset.tab).classList.add('active');
+                
+                document.querySelectorAll('[id$="Document"]').forEach(doc => {
+                    if (doc.id !== 'placeholder') doc.classList.add('hidden');
+                });
+                document.getElementById('placeholder').style.display = 'block';
+                
+                document.querySelectorAll('[id^="download"]').forEach(btn => {
+                    btn.disabled = true;
+                });
+            });
+        });
+
+        document.getElementById('generateUkazBtn').addEventListener('click', function() {
+            const btn = this;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner"></span> Генерация...';
+            btn.disabled = true;
+            
+            setTimeout(function() {
+                const action = document.querySelector('input[name="actionType"]:checked').value;
+                const orderNumber = document.getElementById('ukazOrderNumber').value;
+                const position = document.getElementById('ukazPosition').value;
+                const name = document.getElementById('ukazName').value;
+                const idCard = document.getElementById('idCard').value;
+                const date = document.getElementById('ukazDate').value;
+                const signerName = document.getElementById('signerName').value;
+                const signerPosition = document.getElementById('signerPosition').value;
+                const customText = document.getElementById('customText').value;
+                const addWatermark = document.getElementById('addWatermark').checked;
+
+                const dateObj = date ? new Date(date) : new Date();
+                const formattedDate = dateObj.toLocaleDateString('ru-RU', {
+                    day: 'numeric', month: 'long', year: 'numeric'
+                });
+                const shortDate = date ? date.split('-').reverse().join('.') : new Date().toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }).split('.').join('.');
+
+                document.getElementById('ukazCurrentDate').textContent = shortDate;
+                document.getElementById('ukazDatePlaceholder').textContent = formattedDate;
+                document.getElementById('ukazOrderNumberPlaceholder').textContent = orderNumber;
+                document.getElementById('ukazPositionPlaceholder').textContent = position;
+                document.getElementById('ukazNamePlaceholder').textContent = name;
+                document.getElementById('ukazIdCardPlaceholder').textContent = idCard;
+                document.getElementById('ukazSignerPositionPlaceholder').textContent = signerPosition;
+                document.getElementById('ukazSignerNamePlaceholder').textContent = signerName;
+                document.getElementById('ukazSignerPositionDisplay').textContent = signerPosition;
+                document.getElementById('ukazSignerNameDisplay').textContent = signerName;
+
+                const mainText = document.getElementById('ukazMainText');
+                const actionText = action === 'appoint' ? 'назначить на должность' : 'уволить с должности';
+                mainText.innerHTML = `Я, <span id="ukazSignerPositionPlaceholder">${signerPosition}</span> <span id="ukazSignerNamePlaceholder">${signerName}</span>, в соответствии с действующим законодательством, пользуясь полномочиями, делегированными мне конституцией и иными правовыми актами, указываю ${actionText} "<span id="ukazPositionPlaceholder">${position}</span>" гражданина <span id="ukazNamePlaceholder">${name}</span> с номером ID-карты <span id="ukazIdCardPlaceholder">${idCard}</span>.`;
+
+                const customTextContainer = document.getElementById('ukazCustomTextContainer');
+                if (customText.trim() !== '') {
+                    customTextContainer.innerHTML = `<p>${customText}</p>`;
+                } else {
+                    customTextContainer.innerHTML = '';
+                }
+
+                const nameParts = signerName.trim().split(' ');
+                const firstNameInitial = nameParts[0] ? nameParts[0][0] : '';
+                const lastName = nameParts[1] || '';
+                document.getElementById('ukazSignatureImg').textContent = lastName ? `${firstNameInitial}. ${lastName}` : signerName;
+
+                document.getElementById('ukazWatermark').style.display = addWatermark ? 'block' : 'none';
+
+                document.getElementById('ukazDocument').classList.remove('hidden');
+                document.getElementById('postanovlenieDocument').classList.add('hidden');
+                document.getElementById('placeholder').style.display = 'none';
+                document.getElementById('downloadUkazBtn').disabled = false;
+
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }, 800);
+        });
+
+        document.getElementById('downloadUkazBtn').addEventListener('click', function() {
+            downloadDocument('ukaz');
+        });
+
+        document.getElementById('generatePostanovlenieBtn').addEventListener('click', function() {
+            const btn = this;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner"></span> Генерация...';
+            btn.disabled = true;
+            
+            setTimeout(function() {
+                const department = document.getElementById('department').value;
+                const orderNumber = document.getElementById('postanovlenieOrderNumber').value;
+                const position = document.getElementById('postanovleniePosition').value;
+                const name = document.getElementById('postanovlenieName').value;
+                const date = document.getElementById('postanovlenieDate').value;
+                const addWatermark = document.getElementById('addWatermarkPost').checked;
+
+                const dateObj = date ? new Date(date) : new Date();
+                const formattedDate = dateObj.toLocaleDateString('ru-RU', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                }).split('.').join('.');
+                document.getElementById('postanovlenieCurrentDate').textContent = formattedDate;
+
+                document.getElementById('postanovlenieOrderNumberPlaceholder').textContent = orderNumber;
+                document.getElementById('postanovleniePositionPlaceholder').textContent = position;
+                document.getElementById('postanovlenieNamePlaceholder').textContent = name;
+
+                const departmentTitle = document.getElementById('departmentTitle');
+                if (department === 'PSID') {
+                    departmentTitle.textContent = '"О графике надзорной деятельности "Personal Sanitary Inspection Department"';
+                } else if (department === 'LSFD') {
+                    departmentTitle.textContent = '"О графике надзорной деятельности "Los Santos Fire Department"';
+                }
+
+                const scheduleTable = document.getElementById('scheduleTable');
+                const previewSchedule = document.getElementById('postanovlenieSchedule');
+                previewSchedule.innerHTML = '';
+                
+                for (let i = 0; i < scheduleTable.rows.length; i++) {
+                    const row = scheduleTable.rows[i];
+                    const newRow = previewSchedule.insertRow();
+                    
+                    for (let j = 0; j < row.cells.length; j++) {
+                        const cell = row.cells[j];
+                        const newCell = newRow.insertCell();
+                        
+                        if (j === 0) {
+                            newCell.textContent = cell.textContent;
+                        } else {
+                            const input = cell.querySelector('input');
+                            newCell.textContent = input.value;
+                        }
+                    }
+                }
+
+                document.getElementById('postanovlenieWatermark').style.display = addWatermark ? 'block' : 'none';
+
+                const nameParts = name.trim().split(' ');
+                const firstNameInitial = nameParts[0] ? nameParts[0][0] : '';
+                const lastName = nameParts[1] || '';
+                document.getElementById('postanovlenieSignatureImg').textContent = lastName ? `${firstNameInitial}. ${lastName}` : name;
+
+                document.getElementById('postanovlenieDocument').classList.remove('hidden');
+                document.getElementById('ukazDocument').classList.add('hidden');
+                document.getElementById('placeholder').style.display = 'none';
+                document.getElementById('downloadPostanovlenieBtn').disabled = false;
+
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }, 800);
+        });
+
+        document.getElementById('downloadPostanovlenieBtn').addEventListener('click', function() {
+            downloadDocument('postanovlenie');
+        });
+
+        function downloadDocument(type) {
+            const btn = document.getElementById(`download${type.charAt(0).toUpperCase() + type.slice(1)}Btn`);
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner"></span> Скачивание...';
+            btn.disabled = true;
+
+            let orderNumber, fileName;
+            const documentElement = document.getElementById(`${type}DocumentContent`);
+
+            if (type === 'ukaz') {
+                orderNumber = document.getElementById('ukazOrderNumber').value;
+                fileName = `указ${orderNumber}`;
+            } else if (type === 'postanovlenie') {
+                const department = document.getElementById('department').value;
+                orderNumber = document.getElementById('postanovlenieOrderNumber').value;
+                fileName = `постановление_${department}_${orderNumber}`;
+            }
+
+            const originalTransform = documentElement.style.transform;
+            const originalTransformOrigin = documentElement.style.transformOrigin;
+            documentElement.style.transform = 'scale(1)';
+            documentElement.style.transformOrigin = 'top left';
+
+            html2canvas(documentElement, {
+                useCORS: true,
+                allowTaint: false,
+                scale: 3,
+                width: documentElement.offsetWidth,
+                height: documentElement.offsetHeight,
+                windowWidth: documentElement.scrollWidth,
+                windowHeight: documentElement.scrollHeight,
+                scrollX: 0,
+                scrollY: 0
+            }).then(function(canvas) {
+                const link = document.createElement('a');
+                link.download = `${fileName}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+
+                const toast = document.getElementById('toast');
+                toast.textContent = 'Документ успешно скачан!';
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+
+                documentElement.style.transform = originalTransform;
+                documentElement.style.transformOrigin = originalTransformOrigin;
+
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }).catch(function(error) {
+                console.error('Ошибка при создании изображения:', error);
+                alert('Не удалось создать изображение. Убедитесь, что файлы stamp.png и stamp2.png доступны, и страница загружена через веб-сервер.');
+                documentElement.style.transform = originalTransform;
+                documentElement.style.transformOrigin = originalTransformOrigin;
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html>
